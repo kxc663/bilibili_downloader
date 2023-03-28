@@ -10,19 +10,26 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
         integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src='https://unpkg.com/@ffmpeg/ffmpeg@0.9.6/dist/ffmpeg.min.js'></script>
-    <script type = "module" src="./index.js"></script>
+    <script type="module" src="./index.js"></script>
 </head>
 
 <body>
-    <label for="aname">Enter Video Url:</label>
-    <input type="text" id="aname" name="aname" size=20>
-    <button id="download">Download</button>
-    <button id="merge">Merge</button>
-    <form action ="/download" method="GET">
-        <button type = "submit">Save</button>
-    </form>
+    <h1>Bilibili Video Downloader</h1>
+    <div id="search_box">
+        <label for="aname">Enter Video Url:</label>
+        <input type="text" id="aname" name="aname" size=35 style="font-size:20pt;height:25px">
+        <button id="search">Search</button>
+    </div>
+
     <div id="result"></div>
-    
+    <form action="/merge" method="POST">
+        <button type="submit" hidden>Merge</button>
+    </form>
+    <form action="/download" method="GET">
+        <button type="submit" hidden>Save</button>
+    </form>
+
+
 </body>
 
 </html>

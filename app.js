@@ -1,7 +1,6 @@
 const PORT = 8000
 
 const axios = require('axios')
-const cheerio = require('cheerio')
 const express = require('express')
 const cors = require('cors')
 const path = require('path')
@@ -10,18 +9,16 @@ const fs = require('fs');
 const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 const ffmpeg = require('fluent-ffmpeg');
 const ffprobe = require('ffprobe-static');
-const { exec } = require("child_process");
 
 ffmpeg.setFfprobePath(ffprobe.path);
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 var video_status = true;
 var audio_status = true;
-
+var status = false;
 const config = {
     headers: {
         "referer": "https://www.bilibili.com/",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
-
     }
 }
 
@@ -31,7 +28,6 @@ app.use(express.urlencoded({ extended: true }));
 
 //https://www.bilibili.com/video/BV1Z24y1V7a4
 var url = ''
-var status;
 
 const static_path = path.join(__dirname, "public");
 app.use(express.static(static_path));
@@ -40,16 +36,23 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/results', (req, res) => {
     axios(url, config)
         .then(response => {
-            const html = response.data
-            const $ = cheerio.load(html)
+            const html = response.data;
+            const html_str = html.toString();
+            const title_match = /<title data-vue-meta="true">(.*?)<\/title>/g;
+            var title = [...html_str.matchAll(title_match)][0][1];
+            title = title.substring(0, title.length - 14);
+
+            const author_match = /<meta data-vue-meta="true" itemprop="author" name="author" content="(.*?)">/g;
+            var author = [...html_str.matchAll(author_match)][0][1];
+
             const match_playinfo = /window.__playinfo__=(.*?)<\/script>/g
-            const result = [...html.toString().matchAll(match_playinfo)][0][1]
+            const result = [...html_str.matchAll(match_playinfo)][0][1]
             var video_info = {}
             if (result != null) {
                 console.log("Matched");
-
                 const timelength = [...result.matchAll(/"timelength":(.*?),/g)][0][1];
                 const quality = [...result.matchAll(/"accept_description":(.*?)]/g)][0][1].slice(1);
+
                 const match_base_url = /"baseUrl":"(.*?)"/g
                 const result_base_url = [...result.toString().matchAll(match_base_url)][0][1]
 
@@ -59,28 +62,26 @@ app.get('/results', (req, res) => {
 
                 console.log(result_audio_url)
                 console.log(result_base_url)
-                status = true;
                 video_info = {
+                    title: title,
+                    author: author,
                     timelength: timelength,
                     quality: quality,
-                    status: status,
-                    download_status: false
+                    status: true
                 }
-
+                console.log(video_info)
                 const video_file = fs.createWriteStream("video.mp4");
                 const audio_file = fs.createWriteStream("audio.mp3");
-                const video_request = http.get(result_base_url, function (response) {
+                const video_request = http.get(result_base_url, config, function (response) {
                     response.pipe(video_file);
                     video_file.on("finish", () => {
                         video_file.close();
                         video_info.download_status = true;
                         console.log("Video Download Completed");
-                        //processVideo('video.mp4');
                         video_status = true;
-                        // merge('video.mp4', 'audio.mp4');
                     });
                 });
-                const audio_request = http.get(result_audio_url, function (response) {
+                const audio_request = http.get(result_audio_url, config, function (response) {
                     response.pipe(audio_file);
                     audio_file.on("finish", () => {
                         audio_file.close();
@@ -112,7 +113,7 @@ app.get('/status', (req, res) => {
 });
 
 app.get('/download', function (req, res) {
-    const file = './video.mp4';
+    const file = './output.mp4';
     res.download(file);
 });
 
@@ -129,41 +130,26 @@ app.post("/request", (req, res) => {
 app.post("/merge", (req, res) => {
     if (video_status && audio_status) {
         console.log("Merging");
-        /*
-        let cmd = 'ffmpeg -i audio.mp3 -i video.mp4 -filter_complex "[0:a][1:a]amerge,pan=stereo|c0<c0+c2|c1<c1+c3[out]" -map 1:v -map "[out]" -c:v copy -shortest output.mp4'
-        exec(cmd, function (err, stdout, stderr) {
-            if (err) console.log(err)
-            else console.log("Done!")
-        })*/
-        /*
-                var proc = ffmpeg()
-                    .input("./video.mp4")
-                    .input("./audio.mp3")
-                    .complexFilter([
-                        {
-                            filter: 'amix', options: { inputs: 2, duration: 'longest' }
-                        }
-                    ])
-                    .on('end', async function (output) {
-                        console.log(output, 'files have been merged and saved.')
-                    })
-                    .saveToFile("./file_name.mp4")
-        */
-        //merge('video.mp4', 'audio.mp3');
+        // Adapted from: https://gist.github.com/DusanBrejka/16153fcb757fd9954e94a404d79a2b23
+        const ffmpeg_exec = args => {
+            let cmd = ffmpeg().output(' ');
+            cmd._outputs[0].isFile = false;
+            cmd._outputs[0].target = "";
+            cmd._global.get = () => {
+                return typeof args === "string" ? args.split(' ') : args;
+            };
+            return cmd;
+        };
+
+        ffmpeg_exec('-i video.mp4 -stream_loop -1 -i audio.mp3 -c copy -shortest -map 0:v:0 -map 1:a:0 output.mp4')
+            .on('start', cmdLine => console.log('start', cmdLine))
+            .on('codecData', codecData => console.log('codecData', codecData))
+            .on('error', error => console.log('error', error))
+            .on('stderr', stderr => console.log('stderr', stderr))
+            .run();
     } else {
-        console.log("Need generate first");
+        console.log("Can't find video or audio");
     }
 });
 
 app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`))
-
-function processVideo(videoFile) {
-    ffmpeg.ffprobe(videoFile, function (err, data) {
-        if (err) {
-            console.log(err);
-        } else {
-            console.log(data);
-        }
-    });
-}
-

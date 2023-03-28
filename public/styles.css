@@ -1,3 +1,17 @@
+h1 {
+    text-align: center;
+}
+
 h3 {
     color: red;
+}
+
+body {
+    background-color: grey;
+    text-align: center;
+    font-size: 20pt;
+}
+
+#search {
+    font-size: 20pt;
 }
