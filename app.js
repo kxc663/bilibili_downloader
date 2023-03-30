@@ -166,7 +166,7 @@ app.post("/merge", (req, res) => {
                 res.redirect('/download');
                 clearInterval(checkMerge);
             }
-        }, 1000);
+        }, 10000);
     } else {
         console.log("Can't find video or audio");
     }
