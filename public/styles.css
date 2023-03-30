@@ -7,11 +7,41 @@ h3 {
 }
 
 body {
-    background-color: grey;
-    text-align: center;
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)), url('./img/Background.jpg');
     font-size: 20pt;
+    font-family: Comic Sans MS;
+}
+
+#display {
+    text-align: center;
 }
 
 #search {
     font-size: 20pt;
+    border-radius: 10px;
+    background-color: rgb(205, 205, 205);
+    cursor: pointer;
+    font-family: Comic Sans MS;
+}
+
+#save_btn {
+    width: 10%;
+    font-size: 100%;
+    background-color: rgb(205, 205, 205);
+    color: black;
+    border: black;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: Comic Sans MS;
+}
+
+.copyright {
+    font-size: small;
+    display: block;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    background: #eee;
+    border: 1px solid #ddd;
 }

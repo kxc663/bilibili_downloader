@@ -9,12 +9,14 @@ const fs = require('fs');
 const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 const ffmpeg = require('fluent-ffmpeg');
 const ffprobe = require('ffprobe-static');
+const { clearScreenDown } = require('readline')
 
 ffmpeg.setFfprobePath(ffprobe.path);
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
-var video_status = true;
-var audio_status = true;
+var video_status = false;
+var audio_status = false;
 var status = false;
+
 const config = {
     headers: {
         "referer": "https://www.bilibili.com/",
@@ -27,7 +29,7 @@ app.use(cors())
 app.use(express.urlencoded({ extended: true }));
 
 //https://www.bilibili.com/video/BV1Z24y1V7a4
-var url = ''
+var url = 'default'
 
 const static_path = path.join(__dirname, "public");
 app.use(express.static(static_path));
@@ -36,6 +38,10 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/results', (req, res) => {
     axios(url, config)
         .then(response => {
+            video_status = false;
+            audio_status = false;
+            status = false;
+            url = 'default';
             const html = response.data;
             const html_str = html.toString();
             const title_match = /<title data-vue-meta="true">(.*?)<\/title>/g;
@@ -98,36 +104,43 @@ app.get('/results', (req, res) => {
                 status = false;
                 console.log("Not Matched");
             }
-
-            res.json(video_info)
+            res.json(video_info);
         }).catch(err => console.log(err))
 
 })
 
 app.get('/status', (req, res) => {
-    if (status) {
-        res.json({ status: status })
-    } else {
-        res.json({ status: status })
-    }
+    res.json({
+        download_status: video_status && audio_status,
+        status: status
+    });
 });
 
 app.get('/download', function (req, res) {
     const file = './output.mp4';
     res.download(file);
+    status = true;
+    video_status = false;
+    audio_status = false;
 });
 
 // Handling request 
 app.post("/request", (req, res) => {
     console.log(req.body.name);
     if (req.body.name.toString().includes("bilibili")) {
+        status = req.status;
         url = req.body.name.toString();
+        return res.json({ status: true });
     } else {
-        console.log("Please use Bilibili URL");
+        return res.json({ status: false });
     }
 })
 
 app.post("/merge", (req, res) => {
+    const outputFile = './output.mp4';
+    if (fs.existsSync(outputFile)) {
+        fs.unlinkSync(outputFile);
+    }
     if (video_status && audio_status) {
         console.log("Merging");
         // Adapted from: https://gist.github.com/DusanBrejka/16153fcb757fd9954e94a404d79a2b23
@@ -147,6 +160,13 @@ app.post("/merge", (req, res) => {
             .on('error', error => console.log('error', error))
             .on('stderr', stderr => console.log('stderr', stderr))
             .run();
+
+        var checkMerge = setInterval(() => {
+            if (fs.existsSync(outputFile)) {
+                res.redirect('/download');
+                clearInterval(checkMerge);
+            }
+        }, 1000);
     } else {
         console.log("Can't find video or audio");
     }

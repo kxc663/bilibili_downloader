@@ -14,21 +14,28 @@
 </head>
 
 <body>
-    <h1>Bilibili Video Downloader</h1>
-    <div id="search_box">
-        <label for="aname">Enter Video Url:</label>
-        <input type="text" id="aname" name="aname" size=35 style="font-size:20pt;height:25px">
-        <button id="search">Search</button>
+    <div id="logo">
+        <img src="./img/Logo.png" alt="Bilibili Logo" style="width: 15%; text-align: left;">
     </div>
+    <h1>Bilibili Video Downloader</h1>
+    <div id="display">
+        <div id="search_box">
+            <label for="aname">Enter Video Url:</label>
+            <input type="text" id="aname" name="aname" size=35 placeholder="https://www.bilibili.com/video/BV1g4411L7ff" style="font-size:20pt;height:25px">
+            <button id="search">Search</button>
+        </div>
 
-    <div id="result"></div>
-    <form action="/merge" method="POST">
-        <button type="submit" hidden>Merge</button>
-    </form>
-    <form action="/download" method="GET">
-        <button type="submit" hidden>Save</button>
-    </form>
-
+        <div id="result"></div>
+        <form action="/merge" method="POST">
+            <button type="submit" id="save_btn" hidden>Save</button>
+        </form>
+    </div>
+    <div class="copyright">
+        <center>
+            <p>&copy Copyright 2023 Design by Kaitao Chen</p>
+            <p>Only for academic use</p>
+        </center>
+    </div>
 
 </body>
 

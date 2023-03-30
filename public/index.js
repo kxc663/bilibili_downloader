@@ -1,24 +1,44 @@
 $("#search").click(function () {
+    $("#save_btn").hide();
+    $("#result").html("<br><br><br><br>" + "Searching...");
     console.log('Gathering Data...');
-    setInterval(function () {
+
+    var statusCheck = setInterval(function () {
         $.get("/status", function (data, status) {
             console.log(data);
+            if (data.download_status && !data.status) {
+                $("#result").html("<br><br><br><br>" + "Process Completed! Please Click 'Save' to Download");
+                $("#save_btn").show();
+            } else if (data.status) {
+                console.log("Download Completed");
+                $("#result").html("<br><br><br><br>" + "Download Completed!!");
+                $("#save_btn").hide();
+                clearInterval(statusCheck);
+            } else {
+                console.log("DOWNLOADING...");
+            }
         });
     }, 1000);
+
     $.post("/request",
-        {
-            name: $("#aname").val()
-        },
-        function (data, status) {
-            console.log(data);
-        });
+    {
+        name: $("#aname").val(),
+        status: false
+    },
+    function (data, status) {
+        if(!data.status){
+            $("#result").html("<br><br><br><br>" + "Please provide a valid Bilibili URL");
+        }
+    });
+
     $.get("/results", function (data, status) {
         console.log(data);
         if (data.status) {
             $("#result").html("Title: " + data.title + "<br>"
                 + "Author: " + data.author + "<br>"
                 + "Video Length: " + convertTimeLength(data.timelength) + "<br>"
-                + "Video Quality: " + data.quality.slice(-5).substring(0, 4) + "<br>");
+                + "Video Quality: " + data.quality.slice(-5).substring(0, 4) + "<br>" + "<br>"
+                + "Successfully Gathering Video Data! Start Processing...");
         } else {
             $("#result").html("Not Matched");
         }
