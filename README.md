@@ -12,3 +12,7 @@ Bilibili Downloader is a highly beneficial tool for individuals who desire to wa
 - Enable user to download video with different resolutions
 - Reduce processing time
 - History system
+
+## Reference
+Logo: https://www.pngegg.com/en/png-dklyd
+Background: https://rare-gallery.com/uploads/posts/1039464-sunlight-illustration-anime-anime-girls-sky-wind-bilibili-cloud-computer-wallpaper.jpg

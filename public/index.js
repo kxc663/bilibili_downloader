@@ -1,36 +1,42 @@
+// search button click event
 $("#search").click(function () {
     $("#save_btn").hide();
     $("#result").html("<br><br><br><br>" + "Searching...");
     console.log('Gathering Data...');
 
-    var statusCheck = setInterval(function () {
+    // check the status of video and audio file download on server side every second
+    var status_check = setInterval(function () {
         $.get("/status", function (data, status) {
             console.log(data);
-            if (data.download_status && !data.status) {
+            // both video and audio file download completed on server side
+            if (data.download_status && !data.is_finished) {
                 $("#result").html("<br><br><br><br>" + "Process Completed! Please Click 'Save' to Download");
                 $("#save_btn").show();
-            } else if (data.status) {
+                // download completed on client side
+            } else if (data.is_finished) {
                 console.log("Download Completed");
                 $("#result").html("<br><br><br><br>" + "Download Completed!!");
                 $("#save_btn").hide();
-                clearInterval(statusCheck);
+                clearInterval(status_check);
             } else {
                 console.log("DOWNLOADING...");
             }
         });
     }, 1000);
 
+    // send url to server side and get status from server side
     $.post("/request",
-    {
-        name: $("#aname").val(),
-        status: false
-    },
-    function (data, status) {
-        if(!data.status){
-            $("#result").html("<br><br><br><br>" + "Please provide a valid Bilibili URL");
-        }
-    });
+        {
+            name: $("#aname").val(),
+            status: false
+        },
+        function (data, status) {
+            if (!data.status) {
+                $("#result").html("<br><br><br><br>" + "Please provide a valid Bilibili URL");
+            }
+        });
 
+    // get the video data from server side
     $.get("/results", function (data, status) {
         console.log(data);
         if (data.status) {
@@ -45,6 +51,7 @@ $("#search").click(function () {
     });
 });
 
+// convert the time length from ms to h:m:s
 function convertTimeLength(ms) {
     var output = "";
     var seconds = ms / 1000;
