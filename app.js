@@ -1,15 +1,14 @@
 const PORT = 8000
 
-const axios = require('axios')
-const express = require('express')
-const cors = require('cors')
-const path = require('path')
+const axios = require('axios');
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
 const http = require('https');
 const fs = require('fs');
 const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 const ffmpeg = require('fluent-ffmpeg');
 const ffprobe = require('ffprobe-static');
-const { clearScreenDown } = require('readline')
 
 ffmpeg.setFfprobePath(ffprobe.path);
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
@@ -24,12 +23,13 @@ const config = {
     }
 }
 
-const app = express()
-app.use(cors())
+const app = express();
+app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
 //https://www.bilibili.com/video/BV1Z24y1V7a4
-var url = 'default'
+var url = 'default';
+var video_title = 'default';
 
 const static_path = path.join(__dirname, "public");
 app.use(express.static(static_path));
@@ -51,31 +51,32 @@ app.get('/results', (req, res) => {
             const author_match = /<meta data-vue-meta="true" itemprop="author" name="author" content="(.*?)">/g;
             var author = [...html_str.matchAll(author_match)][0][1];
 
-            const match_playinfo = /window.__playinfo__=(.*?)<\/script>/g
-            const result = [...html_str.matchAll(match_playinfo)][0][1]
-            var video_info = {}
+            const match_playinfo = /window.__playinfo__=(.*?)<\/script>/g;
+            const result = [...html_str.matchAll(match_playinfo)][0][1];
+            var video_info = {};
             if (result != null) {
                 console.log("Matched");
                 const timelength = [...result.matchAll(/"timelength":(.*?),/g)][0][1];
                 const quality = [...result.matchAll(/"accept_description":(.*?)]/g)][0][1].slice(1);
 
-                const match_base_url = /"baseUrl":"(.*?)"/g
-                const result_base_url = [...result.toString().matchAll(match_base_url)][0][1]
+                const match_base_url = /"baseUrl":"(.*?)"/g;
+                const result_base_url = [...result.toString().matchAll(match_base_url)][0][1];
 
-                const match_audio = /"audio":(.*?)}]/g
-                const result_audio = [...result.toString().matchAll(match_audio)][0][1]
-                const result_audio_url = [...result_audio.matchAll(/"baseUrl":"(.*?)"/g)][0][1]
+                const match_audio = /"audio":(.*?)}]/g;
+                const result_audio = [...result.toString().matchAll(match_audio)][0][1];
+                const result_audio_url = [...result_audio.matchAll(/"baseUrl":"(.*?)"/g)][0][1];
 
-                console.log(result_audio_url)
-                console.log(result_base_url)
+                console.log(result_audio_url);
+                console.log(result_base_url);
                 video_info = {
                     title: title,
                     author: author,
                     timelength: timelength,
                     quality: quality,
                     status: true
-                }
-                console.log(video_info)
+                };
+                video_title = title;
+                console.log(video_info);
                 const video_file = fs.createWriteStream("video.mp4");
                 const audio_file = fs.createWriteStream("audio.mp3");
                 const video_request = http.get(result_base_url, config, function (response) {
@@ -96,18 +97,17 @@ app.get('/results', (req, res) => {
                         audio_status = true;
                     });
                 });
-                //console.log(result_base_url);
             } else {
                 video_info = {
                     status: status
-                }
+                };
                 status = false;
                 console.log("Not Matched");
             }
             res.json(video_info);
         }).catch(err => console.log(err))
 
-})
+});
 
 app.get('/status', (req, res) => {
     res.json({
@@ -118,7 +118,27 @@ app.get('/status', (req, res) => {
 
 app.get('/download', function (req, res) {
     const file = './output.mp4';
-    res.download(file);
+    const new_file = './' + video_title + '.mp4';
+    fs.rename(file, new_file, function (err) {
+        if (err) throw err;
+        console.log('File Renamed.');
+    });
+    res.download(new_file, function (err) {
+        if (err) {
+            console.log(err);
+        } else {
+            fs.unlink(new_file, function () {
+                console.log("Output File was deleted");
+            });
+            fs.unlink("./video.mp4", function () {
+                console.log("Video File was deleted");
+            });
+            fs.unlink("./audio.mp3", function () {
+                console.log("Audio File was deleted");
+            });
+        }
+    });
+
     status = true;
     video_status = false;
     audio_status = false;
@@ -137,10 +157,7 @@ app.post("/request", (req, res) => {
 })
 
 app.post("/merge", (req, res) => {
-    const outputFile = './output.mp4';
-    if (fs.existsSync(outputFile)) {
-        fs.unlinkSync(outputFile);
-    }
+    const outputFile = 'output.mp4';
     if (video_status && audio_status) {
         console.log("Merging");
         // Adapted from: https://gist.github.com/DusanBrejka/16153fcb757fd9954e94a404d79a2b23
@@ -172,4 +189,4 @@ app.post("/merge", (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`))
+app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
