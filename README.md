@@ -1,6 +1,7 @@
 # Bilibili Downloader
 ## Instruction:
 ### Link to website: https://bilibili-downloader.onrender.com/
+### Bilibili website: https:/bilibili.com/
 ## Write up:
 ### What?
 Bilibili is a popular Chinese video-sharing platform where users can upload, view, and share videos. This Web App a video downloader for a Chinese video website Bilibili. With this video downloader tool, users can copy the URL of a video they want to download from Bilibili and paste it into the downloader's interface. Once the URL is submitted, the downloader will retrieve the video from Bilibili's servers and allow the user to save it to their local device for offline viewing.
@@ -16,3 +17,10 @@ Bilibili Downloader is a highly beneficial tool for individuals who desire to wa
 ## Reference
 Logo: https://www.pngegg.com/en/png-dklyd
 Background: https://rare-gallery.com/uploads/posts/1039464-sunlight-illustration-anime-anime-girls-sky-wind-bilibili-cloud-computer-wallpaper.jpg
+
+## How to test locally
+1. Download node.js
+2. 'git clone git@github.com:kxc663/bilibili_downloader.git'
+3. 'npm install'
+4. 'npm start'
+5. Open site with url: localhost:8000/
