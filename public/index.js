@@ -1,7 +1,8 @@
 // search button click event
 $("#search").click(function () {
     $("#save_btn").hide();
-    $("#result").html("<br><br><br><br>" + "Searching...");
+    $("#status").html("<br><br><br><br>" + "Searching...");
+    $("#result").html("");
     console.log('Gathering Data...');
 
     // check the status of video and audio file download on server side every second
@@ -10,12 +11,12 @@ $("#search").click(function () {
             console.log(data);
             // both video and audio file download completed on server side
             if (data.download_status && !data.is_finished) {
-                $("#result").html("<br><br><br><br>" + "Process Completed! Please Click 'Save' to Download");
+                $("#status").html("<br><br><br><br>" + "Process Completed! Please Click 'Save' to Download");
                 $("#save_btn").show();
                 // download completed on client side
             } else if (data.is_finished) {
                 console.log("Download Completed");
-                $("#result").html("<br><br><br><br>" + "Download Completed!!");
+                $("#status").html("<br><br><br><br>" + "Download Completed!!");
                 $("#save_btn").hide();
                 clearInterval(status_check);
             } else {
@@ -32,7 +33,7 @@ $("#search").click(function () {
         },
         function (data, status) {
             if (!data.status) {
-                $("#result").html("<br><br><br><br>" + "Please provide a valid Bilibili URL");
+                $("#status").html("<br><br><br><br>" + "Please provide a valid Bilibili URL");
             }
         });
 
@@ -43,8 +44,8 @@ $("#search").click(function () {
             $("#result").html("Title: " + data.title + "<br>"
                 + "Author: " + data.author + "<br>"
                 + "Video Length: " + convertTimeLength(data.timelength) + "<br>"
-                + "Video Quality: " + data.quality.slice(-5).substring(0, 4) + "<br>" + "<br>"
-                + "Successfully Gathering Video Data! Start Processing...");
+                + "Video Quality: " + data.quality.slice(-5).substring(0, 4) + "<br>" + "<br>");
+            $("#status").html("Successfully Gathering Video Data! Start Processing...");
         } else {
             $("#result").html("Not Matched");
         }
